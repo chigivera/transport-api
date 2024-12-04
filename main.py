@@ -4,11 +4,18 @@ import openrouteservice as ors
 import requests
 from bs4 import BeautifulSoup
 import datetime
-import folium
 from fastapi.responses import JSONResponse
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Initialize ORS client
 ors_client = ors.Client(key='5b3ce3597851110001cf6248903814bdbe7a40ffa6e8e9005e290f43')  # Replace with a valid API key
@@ -79,28 +86,15 @@ def calculate_route(data: RouteRequest):
         consumption = calculate_fuel_consumption(route_distance_km, data.profile, data.fuel_type)
         cost = consumption * fuel_price
 
-        # Create a map using Folium
-        map_file = "route_map.html"
-        m = folium.Map(location=list(reversed(start)), zoom_start=12)
-        folium.Marker(location=list(reversed(start)), icon=folium.Icon(color="red", icon="car", prefix='fa')).add_to(m)
-        folium.Marker(location=list(reversed(end)), icon=folium.Icon(color="green", icon="car", prefix='fa')).add_to(m)
-
-        # Add routes to the map
-        decoded = ors.convert.decode_polyline(result['routes'][0]['geometry'])
-        folium.PolyLine(locations=[list(reversed(coord)) for coord in decoded['coordinates']], color="blue").add_to(m)
-
-        # Save the map to an HTML file
-        m.save(map_file)
-
-        # Construct the iframe
-        iframe_html = f"<iframe src='{map_file}' width='100%' height='600' style='border:none;'></iframe>"
+        # Extract route coordinates
+        route_coordinates = ors.convert.decode_polyline(result['routes'][0]['geometry'])['coordinates']
 
         # Return response
         return {
             "distance_km": round(route_distance_km, 2),
             "duration": route_duration,
             "transport_cost_mad": round(cost, 2),
-            "map_iframe": iframe_html  # Add iframe HTML as a field
+            "route_coordinates": route_coordinates
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -108,3 +102,4 @@ def calculate_route(data: RouteRequest):
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Transport Cost API"}
+
