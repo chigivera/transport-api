@@ -4,8 +4,6 @@ import openrouteservice as ors
 import requests
 from bs4 import BeautifulSoup
 import datetime
-from fastapi.responses import JSONResponse
-import os
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -19,11 +17,6 @@ app.add_middleware(
 
 # Initialize ORS client
 ors_client = ors.Client(key='5b3ce3597851110001cf6248903814bdbe7a40ffa6e8e9005e290f43')  # Replace with a valid API key
-
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    response = await call_next(request)
-    return response
 
 # Helper functions
 def calculate_fuel_consumption(distance_km, profile, fuel_type):
