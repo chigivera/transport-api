@@ -1,11 +1,7 @@
-schemaVersion: 1.0
-
-buildConfig:
-  type: pip
-
+schemaVersion: 1.0 
+ # Example endpoint configuration
 endpoints:
-  - name: transport-api
-    context: /
-    port: 8000
-    type: REST
-    scheme: http
+- name: my-service-endpoint
+  service:
+     port: 8000
+  type: REST
